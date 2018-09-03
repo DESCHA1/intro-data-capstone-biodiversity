@@ -1,0 +1,147 @@
+FINAL CAPSTONE PROJECT (Completed Code in the Learning Environment)                 Descha Daemgen
+
+import codecademylib
+import pandas as pd
+from matplotlib import pyplot as plt
+
+# Loading the Data
+species = pd.read_csv('species_info.csv')
+
+#print species.head()
+
+species_count = species.scientific_name.nunique()
+species_type = species.category.unique()
+conservation_statuses = species.conservation_status.unique()
+
+print species_count
+print species_type
+print conservation_statuses
+
+#how many species fall into each conservation category?
+conservation_counts = species.groupby('conservation_status').scientific_name.nunique().reset_index()
+print conservation_counts
+
+#replace NaN with 'No Intervention'
+species.fillna('No Intervention', inplace = True)
+
+#run groupby again, with 'No Intervention' as a named category
+conservation_counts_fixed = species.groupby('conservation_status').scientific_name.nunique().reset_index()
+print conservation_counts_fixed
+
+#sort by protection counts, rather than alphabetical order of scientific names
+protection_counts = species.groupby('conservation_status')\
+    .scientific_name.nunique().reset_index()\
+    .sort_values(by='scientific_name')
+
+#create a bar graph of protection_counts and scientific_name
+plt.figure(figsize=(10, 4))
+ax = plt.subplot()
+plt.bar(range(len(protection_counts)),protection_counts.scientific_name.values)
+ax.set_xticks(range(len(protection_counts)))
+ax.set_xticklabels(protection_counts.conservation_status.values)
+plt.ylabel('Number of Species')
+plt.xlabel('Conservation Status')
+plt.title('Conservation Status by Species')
+plt.show()
+
+
+#create a new column, that is TRUE if species is protected; else, FALSE
+species['is_protected'] = species.conservation_status != 'No Intervention'
+
+category_counts = species.groupby(['category', 'is_protected']).scientific_name.nunique()\
+.reset_index()
+
+print category_counts.head()
+
+#pivot category_counts
+category_pivot = category_counts.pivot(columns='is_protected',
+                      index='category',
+                      values='scientific_name')\
+                      .reset_index()
+
+#rename columns from 'TRUE' and 'FALSE' to 'protected' and 'not_protected'
+category_pivot.columns = ['category','not_protected','protected']
+
+#create a new column in category_pivot called 'percent_protected,' which is number of protected species divided by total number of species
+category_pivot['percent_protected'] = category_pivot.protected / (category_pivot.not_protected
++ category_pivot.protected)
+
+print category_pivot
+
+#Run a chi-squared test to determine whether Mammals are more likely to be endangered than Birds
+
+contingency = [[30, 146],
+               [75, 413]]
+
+_,pval,_,_ = chi2_contingency(contingency)
+print pval
+
+#Run a second chi-squared test to determine whether Mammals are more likely to be endangered than Reptiles
+
+contingency2 = [[30, 146],
+                 [5, 73]] 
+
+_,pval_reptile_mammal,_,_ = chi2_contingency(contingency2)
+print pval_reptile_mammal
+
+
+PART TWO:
+
+#Load and Examine Data
+observations = pd.read_csv('observations.csv')
+print observations.head()
+
+#Return all instances of sheep within the category of common_names
+species['is_sheep'] = species.common_names.apply(lambda x: 'Sheep' in x)
+
+species_is_sheep = species[species.is_sheep]
+
+print species_is_sheep
+
+#Find all instances of names including 'sheep' that refer to mammals only, and not plants
+sheep_species = species[(species.is_sheep) & (species.category == 'Mammal')]
+
+print sheep_species
+
+#merge sheep_species with observations
+sheep_observations = sheep_species.merge(observations)
+
+print sheep_observations.head()
+
+#Use groupby to determine how many total sheep sightings(irrespective of species) were observed at each national park
+
+obs_by_park = sheep_observations\
+.groupby('park_name').observations.sum().reset_index()
+
+print obs_by_park
+
+#Create a bar chart showing observations of sheep per week at each park
+plt.figure(figsize=(16,4))
+ax = plt.subplot()
+plt.bar(range(len(obs_by_park.park_name)), obs_by_park.observations)
+ax.set_xticks(range(len(obs_by_park.park_name)))
+ax.set_xticklabels(obs_by_park.park_name)
+plt.ylabel('Number of Observations')
+plt.title('Observations of Sheep per Week')
+plt.show()
+
+
+#Calculate the sample size required to determine, with 90%confidence, that foot and mouth disease figures have dropped from 15% to 10%
+baseline = 15
+minimum_detectable_effect = 33.33
+sample_size_per_variant = 870
+
+#Calculate the number of weeks required, based on Yellowstone sheep observation numbers, to reach this required sample size
+yellowstone_weeks_observing = (sample_size_variant / 507)
+
+#Calculate the number of weeks required, based on Bryce National Park sheep observation numbers, to reach this required sample size
+bryce_weeks_observing = (sample_size_variant / 250)
+
+
+
+
+
+
+
+
+ 
